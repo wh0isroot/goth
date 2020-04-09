@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wh0isroot/goth"
+	"github.com/markbates/goth"
 )
 
 // Session stores data during the auth process with Gitlab.
