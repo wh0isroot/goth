@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"fmt"
+
 	"github.com/wh0isroot/goth"
 	"golang.org/x/oauth2"
 )
@@ -152,21 +153,21 @@ func newConfig(provider *Provider, authURL, tokenURL string, scopes []string) *o
 
 func userFromReader(r io.Reader, user *goth.User) error {
 	u := struct {
-			data struct{
+		Data struct {
 			Name      string `json:"name"`
 			Email     string `json:"email"`
 			ID        int    `json:"user_id"`
 			AvatarURL string `json:"avatar_url"`
-		}{} `json:"data"`
+		} `json:"data"`
 	}{}
 	err := json.NewDecoder(r).Decode(&u)
 	if err != nil {
 		return err
 	}
-	user.Email = u.Email
-	user.Name = u.Name
-	user.UserID = strconv.Itoa(u.ID)
-	user.AvatarURL = u.AvatarURL
+	user.Email = u.Data.Email
+	user.Name = u.Data.Name
+	user.UserID = strconv.Itoa(u.Data.ID)
+	user.AvatarURL = u.Data.AvatarURL
 	return nil
 }
 
