@@ -1,4 +1,4 @@
-package gitlab
+package lark
 
 import (
 	"encoding/json"
