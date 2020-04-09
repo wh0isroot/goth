@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/markbates/goth"
-	"github.com/markbates/goth/providers/eveonline"
+	"github.com/wh0isroot/goth"
+	"github.com/wh0isroot/goth/providers/eveonline"
 	"github.com/stretchr/testify/assert"
 )
 

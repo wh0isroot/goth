@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/markbates/goth"
+	"github.com/wh0isroot/goth"
 	"golang.org/x/oauth2"
 )
 

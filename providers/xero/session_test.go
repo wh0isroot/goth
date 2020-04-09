@@ -3,8 +3,8 @@ package xero_test
 import (
 	"testing"
 
-	"github.com/markbates/goth"
-	"github.com/markbates/goth/providers/xero"
+	"github.com/wh0isroot/goth"
+	"github.com/wh0isroot/goth/providers/xero"
 	"github.com/stretchr/testify/assert"
 )
 
