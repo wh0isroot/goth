@@ -1,4 +1,4 @@
-module github.com/markbates/goth
+module github.com/wh0isroot/goth
 
 go 1.14
 
