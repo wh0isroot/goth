@@ -56,7 +56,7 @@ func NewCustomisedURL(clientKey, secret, callbackURL, authURL, tokenURL, profile
 		ClientKey:    clientKey,
 		Secret:       secret,
 		CallbackURL:  callbackURL,
-		providerName: "gitlab",
+		providerName: "lark",
 		profileURL:   profileURL,
 	}
 	p.config = newConfig(p, authURL, tokenURL, scopes)
@@ -102,7 +102,7 @@ func (p *Provider) FetchUser(session goth.Session) (goth.User, error) {
 		return user, fmt.Errorf("%s cannot get user information without accessToken", p.providerName)
 	}
 
-	response, err := p.Client().Get(p.profileURL + "?access_token=" + url.QueryEscape(sess.AccessToken))
+	response, err := p.Client().Get(p.profileURL + "?user_access_token=" + url.QueryEscape(sess.AccessToken))
 	if err != nil {
 		if response != nil {
 			response.Body.Close()
@@ -142,7 +142,6 @@ func newConfig(provider *Provider, authURL, tokenURL string, scopes []string) *o
 		},
 		Scopes: []string{},
 	}
-
 	if len(scopes) > 0 {
 		for _, scope := range scopes {
 			c.Scopes = append(c.Scopes, scope)
