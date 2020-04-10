@@ -56,7 +56,7 @@ func NewCustomisedURL(clientKey, secret, callbackURL, authURL, tokenURL, profile
 		ClientKey:    clientKey,
 		Secret:       secret,
 		CallbackURL:  callbackURL,
-		providerName: "lark",
+		providerName: "gitlab",
 		profileURL:   profileURL,
 	}
 	p.config = newConfig(p, authURL, tokenURL, scopes)
