@@ -36,7 +36,7 @@ type Provider struct {
 	Secret       string
 	CallbackURL  string
 	HTTPClient   *http.Client
-	config       *oauth2.Config
+	config       *Config
 	providerName string
 	authURL      string
 	tokenURL     string
@@ -77,17 +77,15 @@ func (p *Provider) Client() *http.Client {
 	return goth.HTTPClientWithFallBack(p.HTTPClient)
 }
 
-// Debug is a no-op for the gitlab package.
+// Debug is a no-op for the lark package.
 func (p *Provider) Debug(debug bool) {}
 
-// BeginAuth asks Gitlab for an authentication end-point.
+// BeginAuth asks lark for an authentication end-point.
 func (p *Provider) BeginAuth(state string) (goth.Session, error) {
-	return &Session{
-		AuthURL: p.config.AuthCodeURL(state),
-	}, nil
+	return &Session{}, nil
 }
 
-// FetchUser will go to Gitlab and access basic information about the user.
+// FetchUser will go to lark and access basic information about the user.
 func (p *Provider) FetchUser(session goth.Session) (goth.User, error) {
 	sess := session.(*Session)
 	user := goth.User{
@@ -131,12 +129,12 @@ func (p *Provider) FetchUser(session goth.Session) (goth.User, error) {
 	return user, err
 }
 
-func newConfig(provider *Provider, authURL, tokenURL string, scopes []string) *oauth2.Config {
-	c := &oauth2.Config{
-		ClientID:     provider.ClientKey,
-		ClientSecret: provider.Secret,
-		RedirectURL:  provider.CallbackURL,
-		Endpoint: oauth2.Endpoint{
+func newConfig(provider *Provider, authURL, tokenURL string, scopes []string) *Config {
+	c := &Config{
+		AppID:       provider.ClientKey,
+		AppSecret:   provider.Secret,
+		RedirectURL: provider.CallbackURL,
+		Endpoint: Endpoint{
 			AuthURL:  authURL,
 			TokenURL: tokenURL,
 		},
@@ -172,16 +170,10 @@ func userFromReader(r io.Reader, user *goth.User) error {
 
 //RefreshTokenAvailable refresh token is provided by auth provider or not
 func (p *Provider) RefreshTokenAvailable() bool {
-	return true
+	return false
 }
 
 //RefreshToken get new access token based on the refresh token
 func (p *Provider) RefreshToken(refreshToken string) (*oauth2.Token, error) {
-	token := &oauth2.Token{RefreshToken: refreshToken}
-	ts := p.config.TokenSource(goth.ContextForClient(p.Client()), token)
-	newToken, err := ts.Token()
-	if err != nil {
-		return nil, err
-	}
-	return newToken, err
+	return nil, nil
 }

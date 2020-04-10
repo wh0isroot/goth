@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/markbates/goth"
-	"golang.org/x/oauth2"
 )
 
 // Session stores data during the auth process with Gitlab.
@@ -31,12 +30,12 @@ func (s Session) GetAuthURL() (string, error) {
 // Authorize the session with Gitlab and return the access token to be stored for future use.
 func (s *Session) Authorize(provider goth.Provider, params goth.Params) (string, error) {
 	p := provider.(*Provider)
-	token, err := p.config.Exchange(goth.ContextForClient(p.Client()), params.Get("code"), oauth2.SetAuthURLParam("app_id", p.config.ClientID))
+	token, err := p.config.Exchange(goth.ContextForClient(p.Client()), params.Get("code"))
 	if err != nil {
 		return "", err
 	}
 
-	if !token.Valid() {
+	if token == nil {
 		return "", errors.New("Invalid token received from provider")
 	}
 

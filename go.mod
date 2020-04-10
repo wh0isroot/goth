@@ -12,6 +12,7 @@ require (
 	github.com/jarcoal/httpmock v0.0.0-20180424175123-9c70cfe4a1da
 	github.com/lestrrat-go/jwx v0.9.0
 	github.com/markbates/going v1.0.0
+	github.com/markbates/goth v1.64.0
 	github.com/mrjones/oauth v0.0.0-20180629183705-f4e24b6d100c
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
