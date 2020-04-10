@@ -82,7 +82,9 @@ func (p *Provider) Debug(debug bool) {}
 
 // BeginAuth asks lark for an authentication end-point.
 func (p *Provider) BeginAuth(state string) (goth.Session, error) {
-	return &Session{}, nil
+	return &Session{
+		AuthURL: p.config.AuthCodeURL(state),
+	}, nil
 }
 
 // FetchUser will go to lark and access basic information about the user.

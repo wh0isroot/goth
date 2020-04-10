@@ -60,7 +60,7 @@ func Test_SessionFromJSON(t *testing.T) {
 }
 
 func provider() *lark.Provider {
-	return lark.New("cli_9e046e89522d500e", "6TEgs5Vhs52S8cOPSrEh4eOMXfa82XUz", "https://127.0.0.1")
+	return lark.New("cli_9e046e89522d500e", "6TEgs5Vhs52S8cOPSrEh4eOMXfa82XUz", "/foo")
 }
 
 func urlCustomisedURLProvider() *lark.Provider {
