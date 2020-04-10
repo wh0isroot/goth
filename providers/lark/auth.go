@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -29,18 +28,24 @@ type Endpoint struct {
 }
 
 type tokenJSON struct {
-	AccessToken  string         `json:"app_access_token"`
-	TokenType    string         `json:"token_type"`
-	RefreshToken string         `json:"refresh_token"`
-	ExpiresIn    expirationTime `json:"expires_in"` // at least PayPal returns string, while most return number
-	Expires      expirationTime `json:"expires"`    // broken Facebook spelling of expires_in
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+	Data struct {
+		AccessToken      string `json:"access_token"`
+		AvatarURL        string `json:"avatar_url"`
+		ExpiresIn        int    `json:"expires_in"`
+		Name             string `json:"name"`
+		EnName           string `json:"en_name"`
+		OpenID           string `json:"open_id"`
+		TenantKey        string `json:"tenant_key"`
+		RefreshExpiresIn int    `json:"refresh_expires_in"`
+		RefreshToken     string `json:"refresh_token"`
+		TokenType        string `json:"token_type"`
+	} `json:"data"`
 }
 
 func (e *tokenJSON) expiry() (t time.Time) {
-	if v := e.ExpiresIn; v != 0 {
-		return time.Now().Add(time.Duration(v) * time.Second)
-	}
-	if v := e.Expires; v != 0 {
+	if v := e.Data.ExpiresIn; v != 0 {
 		return time.Now().Add(time.Duration(v) * time.Second)
 	}
 	return
@@ -105,6 +110,7 @@ type Config struct {
 
 	// ClientSecret is the application's secret.
 	AppSecret string
+	AppToken  string
 
 	// Endpoint contains the resource server's token endpoint
 	// URLs. These are constants specific to each server and are
@@ -151,7 +157,7 @@ func tokenFromInternal(t *Token) *Token {
 // This token is then mapped from *internal.Token into an *oauth2.Token which is returned along
 // with an error..
 func retrieveToken(ctx context.Context, c *Config, v url.Values) (*Token, error) {
-	tk, err := RetrieveToken(ctx, c.AppID, c.AppSecret, c.Endpoint.TokenURL, v)
+	tk, err := RetrieveToken(ctx, c.AppID, c.AppToken, c.Endpoint.TokenURL, v)
 	if err != nil {
 		if rErr, ok := err.(*RetrieveError); ok {
 			return nil, (*RetrieveError)(rErr)
@@ -162,17 +168,27 @@ func retrieveToken(ctx context.Context, c *Config, v url.Values) (*Token, error)
 }
 
 func RetrieveToken(ctx context.Context, clientID, clientSecret, tokenURL string, v url.Values) (*Token, error) {
-	req, err := http.NewRequest("POST", tokenURL, strings.NewReader(v.Encode()))
+	u := struct {
+		AppAccessToken string `json:"app_access_token"`
+		GrantType      string `json:"grant_type"`
+		Code           string `json:"code"`
+	}{clientSecret, v.Get("grant_type"), v.Get("code")}
+	p, err := json.Marshal(u)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req, err := http.NewRequest("POST", tokenURL, ioutil.NopCloser(bytes.NewReader(p)))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
 	r, err := ctxhttp.Do(ctx, ContextClient(ctx), req)
 	if err != nil {
 		return nil, err
 	}
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1<<20))
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", err)
 	}
@@ -214,9 +230,9 @@ func RetrieveToken(ctx context.Context, clientID, clientSecret, tokenURL string,
 			return nil, err
 		}
 		token = &Token{
-			AccessToken:  tj.AccessToken,
-			TokenType:    tj.TokenType,
-			RefreshToken: tj.RefreshToken,
+			AccessToken:  tj.Data.AccessToken,
+			TokenType:    tj.Data.TokenType,
+			RefreshToken: tj.Data.RefreshToken,
 			Expiry:       tj.expiry(),
 			Raw:          make(map[string]interface{}),
 		}
@@ -281,14 +297,10 @@ func (c *Config) AuthCodeURL(state string, opts ...AuthCodeOption) string {
 	var buf bytes.Buffer
 	buf.WriteString(c.Endpoint.AuthURL)
 	v := url.Values{
-		"response_type": {"code"},
-		"app_id":        {c.AppID},
+		"app_id": {c.AppID},
 	}
 	if c.RedirectURL != "" {
 		v.Set("redirect_uri", c.RedirectURL)
-	}
-	if len(c.Scopes) > 0 {
-		v.Set("scope", strings.Join(c.Scopes, " "))
 	}
 	if state != "" {
 		// TODO(light): Docs say never to omit state; don't allow empty.

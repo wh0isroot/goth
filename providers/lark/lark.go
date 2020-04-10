@@ -25,19 +25,22 @@ import (
 //	gitlab.TokenURL = "https://gitlab.acme.com/oauth/token
 //	gitlab.ProfileURL = "https://gitlab.acme.com/api/v3/user
 var (
+	AppAuthURL = "https://open.feishu.cn/open-apis/auth/v3/app_access_token/internal/"
 	AuthURL    = "https://open.feishu.cn/open-apis/authen/v1/index"
-	TokenURL   = "https://open.feishu.cn/open-apis/authen/v1/access_token"
-	ProfileURL = "https://open.feishu.cn/open-apis/authen/v1/user_info"
+	TokenURL   = "https://open.feishu.cn/open-apis/auth/v3/app_access_token/internal/"
+	ProfileURL = "https://open.feishu.cn/open-apis/authen/v1/access_token"
 )
 
 // Provider is the implementation of `goth.Provider` for accessing Gitlab.
 type Provider struct {
 	ClientKey    string
 	Secret       string
+	AppToken     string
 	CallbackURL  string
 	HTTPClient   *http.Client
 	config       *Config
 	providerName string
+	appAuthURL   string
 	authURL      string
 	tokenURL     string
 	profileURL   string
@@ -82,6 +85,31 @@ func (p *Provider) Debug(debug bool) {}
 
 // BeginAuth asks lark for an authentication end-point.
 func (p *Provider) BeginAuth(state string) (goth.Session, error) {
+
+	b := struct {
+		appID     string `json:"app_id"`
+		appSecret string `jsob:"app_secret"`
+	}{p.ClientKey, p.Secret}
+	data, err := json.Marshal(b)
+	if err != nil {
+		return nil, err
+	}
+	r, err := p.Client().Post(AppAuthURL, "application/json", ioutil.NopCloser(bytes.NewReader(data)))
+	if err != nil {
+		return nil, err
+	}
+	u := struct {
+		Code              int    `json:"code"`
+		Msg               string `json:"msg"`
+		AppAccessToken    string `json:"app_access_token"`
+		Expire            int    `json:"expire"`
+		TenantAccessToken string `json:"tenant_access_token"`
+	}{}
+	err = json.NewDecoder(r.Body).Decode(&u)
+	if err != nil {
+		return nil, err
+	}
+	p.config.AppToken = u.AppAccessToken
 	return &Session{
 		AuthURL: p.config.AuthCodeURL(state),
 	}, nil
